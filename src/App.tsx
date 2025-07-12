@@ -3,91 +3,52 @@ import CalendarArrowDown from "./components/calendar-arrow-down";
 
 // Utility functions
 const formatNumber = (number: number): string => {
-  if (!isFinite(number)) {
-    return number > 0 ? "∞" : "-∞";
-  }
-
-  if (Math.abs(number) > 1e15) {
-    return "∞";
-  }
-
-  if (Math.abs(number) < 1e-15 && number !== 0) {
-    return "0";
-  }
-
+  if (!isFinite(number)) return number > 0 ? "∞" : "-∞";
+  if (Math.abs(number) > 1e15) return "∞";
+  if (Math.abs(number) < 1e-15 && number !== 0) return "0";
   return parseFloat(number.toFixed(8)).toString();
+};
+
+const sanitizeText = (text: string, maxLength: number = 50): string => {
+  return text.replace(/[<>]/g, "").substring(0, maxLength);
 };
 
 const calculateExpression = (expr: string): string => {
   try {
-    // Sanitize input - remove any potentially dangerous characters
     const sanitizedExpr = expr.replace(/[^0-9+\-x/*%\s.]/g, "");
-
-    // Validate expression format
     const validExpression = /^[\d+\-x/*%\s.]+$/.test(sanitizedExpr);
-    if (!validExpression) {
-      return "invalid input";
-    }
 
-    // Additional validations for expression structure
     if (
-      /[+\-x/*]{2,}/.test(sanitizedExpr) || // Multiple operators in a row
-      /^[+x/*]/.test(sanitizedExpr) || // Starts with operator (except minus)
-      /[+\-x/*]\s*$/.test(sanitizedExpr) || // Ends with operator
-      /\.{2,}/.test(sanitizedExpr) || // Multiple dots
-      /%{2,}/.test(sanitizedExpr) // Multiple percentage signs
+      !validExpression ||
+      /[+\-x/*]{2,}/.test(sanitizedExpr) ||
+      /^[+x/*]/.test(sanitizedExpr) ||
+      /[+\-x/*]\s*$/.test(sanitizedExpr) ||
+      /\.{2,}/.test(sanitizedExpr) ||
+      /%{2,}/.test(sanitizedExpr) ||
+      sanitizedExpr.length > 100 ||
+      sanitizedExpr.includes("eval") ||
+      sanitizedExpr.includes("Function") ||
+      sanitizedExpr.includes("constructor")
     ) {
       return "invalid input";
     }
 
-    // Check for balanced parentheses (if any)
-    const openParens = (sanitizedExpr.match(/\(/g) || []).length;
-    const closeParens = (sanitizedExpr.match(/\)/g) || []).length;
-    if (openParens !== closeParens) {
-      return "invalid input";
-    }
-
-    // Process expression safely
     let processedExpr = sanitizedExpr.replace(/x/g, "*").replace(/\s+/g, "");
-
-    // Handle percentage safely
     if (processedExpr.includes("%")) {
       processedExpr = processedExpr.replace(/(\d+(?:\.\d+)?)%/g, "($1/100)");
     }
 
-    if (!processedExpr || processedExpr.trim() === "") {
-      return "invalid input";
-    }
+    if (!processedExpr || processedExpr.trim() === "") return "invalid input";
 
-    // Additional safety check before evaluation
-    if (processedExpr.length > 100) {
-      return "invalid input";
-    }
-
-    // Additional security checks
-    if (
-      processedExpr.includes("eval") ||
-      processedExpr.includes("Function") ||
-      processedExpr.includes("constructor")
-    ) {
-      return "invalid input";
-    }
-
-    // Evaluate expression safely
     const result = eval(processedExpr);
-
-    if (result === null || result === undefined || !isFinite(result)) {
+    if (result === null || result === undefined || !isFinite(result))
       return "invalid input";
-    }
 
-    // Format result safely
-    if (typeof result === "number") {
-      return Number.isInteger(result)
+    return typeof result === "number"
+      ? Number.isInteger(result)
         ? result.toString()
-        : parseFloat(result.toFixed(8)).toString();
-    }
-
-    return result.toString();
+        : parseFloat(result.toFixed(8)).toString()
+      : result.toString();
   } catch {
     return "invalid input";
   }
@@ -102,46 +63,33 @@ const Display = ({
   displayValue: string;
   expression: string;
   error?: string;
-}) => {
-  // Sanitize display values to prevent XSS
-  const sanitizeText = (text: string): string => {
-    return text.replace(/[<>]/g, "").substring(0, 50);
-  };
-
-  const safeDisplayValue = sanitizeText(displayValue || "");
-  const safeExpression = sanitizeText(expression || "");
-  const safeError = error ? sanitizeText(error) : "";
-
-  return (
-    <div className="mb-4 w-full select-text">
-      {safeExpression && (
-        <div
-          className="text-right text-base text-gray-400 px-2 select-none min-h-[24px] font-mono truncate relative"
-          aria-label="expression"
-          title={safeExpression}
-        >
-          {safeExpression}
-        </div>
-      )}
+}) => (
+  <div className="mb-4 w-full select-text">
+    {expression && (
       <div
-        className={`bg-gradient-to-r from-gray-100 to-gray-200 text-gray-900 rounded-xl px-6 py-4 text-right font-bold select-text transition-all duration-300 shadow-inner border border-gray-300 overflow-hidden ${
-          safeError ? "border-red-300 bg-red-50" : ""
-        }`}
-        aria-label="result"
-        tabIndex={0}
+        className="text-right text-base text-gray-400 px-2 select-none min-h-[24px] font-mono truncate relative"
+        aria-label="expression"
+        title={sanitizeText(expression)}
       >
-        <div
-          className={`truncate relative text-2xl ${
-            safeError ? "text-red-600" : ""
-          }`}
-          title={safeError || safeDisplayValue || "0"}
-        >
-          {safeError || safeDisplayValue || "0"}
-        </div>
+        {sanitizeText(expression)}
+      </div>
+    )}
+    <div
+      className={`bg-gradient-to-r from-gray-100 to-gray-200 text-gray-900 rounded-xl px-6 py-4 text-right font-bold select-text transition-all duration-300 shadow-inner border border-gray-300 overflow-hidden ${
+        error ? "border-red-300 bg-red-50" : ""
+      }`}
+      aria-label="result"
+      tabIndex={0}
+    >
+      <div
+        className={`truncate relative text-2xl ${error ? "text-red-600" : ""}`}
+        title={error || displayValue || "0"}
+      >
+        {error || displayValue || "0"}
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 const CalculatorButton = ({
   children,
@@ -180,64 +128,52 @@ const History = ({
 }: {
   history: HistoryItem[];
   onClear: () => void;
-}) => {
-  // Sanitize history items to prevent XSS
-  const sanitizeText = (text: string): string => {
-    return text.replace(/[<>]/g, "").substring(0, 30);
-  };
-
-  return (
-    <div className="mt-6 w-full max-w-lg bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 p-4 text-sm max-h-48 overflow-y-auto shadow-xl shadow-black/10">
-      <div className="flex justify-between items-center mb-3">
-        <span className="font-semibold text-gray-600 flex items-center gap-2">
-          <CalendarArrowDown className="size-4 text-blue-600" />
-          History
-        </span>
-        <button
-          onClick={onClear}
-          className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-300"
-          aria-label="Clear history"
-        >
-          Clear
-        </button>
-      </div>
-      <ul className="space-y-2">
-        {history.map((item, idx) => {
-          const safeExpression = sanitizeText(item.expression);
-          const safeResult = sanitizeText(item.result);
-
-          return (
-            <li
-              key={idx}
-              className={`flex justify-between items-center p-2 rounded-lg hover:bg-gray-50 transition-all duration-300 ${
-                idx === 0
-                  ? "bg-blue-50/50 border border-blue-200/50 shadow-sm animate-pulse"
-                  : "hover:bg-gray-50"
-              }`}
-            >
-              <span
-                className="text-gray-600 font-mono text-xs truncate flex-1 mr-2 relative"
-                title={safeExpression}
-              >
-                {safeExpression}
-              </span>
-              <span
-                className={`font-bold px-2 py-1 rounded-md truncate min-w-0 flex-shrink-0 relative ${
-                  idx === 0
-                    ? "text-blue-800 bg-blue-100 shadow-sm"
-                    : "text-blue-700 bg-blue-50"
-                }`}
-                title={`= ${safeResult}`}
-              >
-                = {safeResult}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+}) => (
+  <div className="mt-6 w-full max-w-lg bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 p-4 text-sm max-h-48 overflow-y-auto shadow-xl shadow-black/10">
+    <div className="flex justify-between items-center mb-3">
+      <span className="font-semibold text-gray-600 flex items-center gap-2">
+        <CalendarArrowDown className="size-4 text-blue-600" />
+        History
+      </span>
+      <button
+        onClick={onClear}
+        className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-300"
+        aria-label="Clear history"
+      >
+        Clear
+      </button>
     </div>
-  );
-};
+    <ul className="space-y-2">
+      {history.map((item, idx) => (
+        <li
+          key={idx}
+          className={`flex justify-between items-center p-2 rounded-lg hover:bg-gray-50 transition-all duration-300 ${
+            idx === 0
+              ? "bg-blue-50/50 border border-blue-200/50 shadow-sm animate-pulse"
+              : "hover:bg-gray-50"
+          }`}
+        >
+          <span
+            className="text-gray-600 font-mono text-xs truncate flex-1 mr-2 relative"
+            title={sanitizeText(item.expression, 30)}
+          >
+            {sanitizeText(item.expression, 30)}
+          </span>
+          <span
+            className={`font-bold px-2 py-1 rounded-md truncate min-w-0 flex-shrink-0 relative ${
+              idx === 0
+                ? "text-blue-800 bg-blue-100 shadow-sm"
+                : "text-blue-700 bg-blue-50"
+            }`}
+            title={`= ${sanitizeText(item.result, 20)}`}
+          >
+            = {sanitizeText(item.result, 20)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
 // Constants
 const BUTTONS = [
@@ -268,34 +204,29 @@ const KEY_MAP: Record<string, string> = {
 for (let i = 0; i <= 9; i++) KEY_MAP[i.toString()] = i.toString();
 
 const getButtonClass = (key: string) => {
-  const isNumber = /^\d$/.test(key);
-  const isOperator = ["+", "-", "x", "/"].includes(key);
-  const isSpecial = ["C", "CE", ".", "=", "%", "⌫"].includes(key);
-
   if (key === "") return "invisible";
-  if (isNumber)
+  if (/^\d$/.test(key))
     return "bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 border-gray-200 hover:from-gray-100 hover:to-gray-200 hover:shadow-md";
-  if (isOperator)
+  if (["+", "-", "x", "/"].includes(key))
     return "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-600 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg shadow-blue-500/25";
-  if (isSpecial) {
-    if (key === "C" || key === "CE")
-      return "bg-gradient-to-br from-red-500 to-red-600 text-white border-red-600 hover:from-red-600 hover:to-red-700 hover:shadow-lg shadow-red-500/25";
-    if (key === "=")
-      return "bg-gradient-to-br from-green-500 to-green-600 text-white border-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-lg shadow-green-500/25";
-    if (key === "%")
-      return "bg-gradient-to-br from-purple-500 to-purple-600 text-white border-purple-600 hover:from-purple-600 hover:to-purple-700 hover:shadow-lg shadow-purple-500/25";
-    if (key === "⌫")
-      return "bg-gradient-to-br from-orange-500 to-orange-600 text-white border-orange-600 hover:from-orange-600 hover:to-orange-700 hover:shadow-lg shadow-orange-500/25";
-    return "bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 border-gray-200 hover:from-gray-100 hover:to-gray-200 hover:shadow-md";
-  }
-  return "";
+  if (["C", "CE"].includes(key))
+    return "bg-gradient-to-br from-red-500 to-red-600 text-white border-red-600 hover:from-red-600 hover:to-red-700 hover:shadow-lg shadow-red-500/25";
+  if (key === "=")
+    return "bg-gradient-to-br from-green-500 to-green-600 text-white border-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-lg shadow-green-500/25";
+  if (key === "%")
+    return "bg-gradient-to-br from-purple-500 to-purple-600 text-white border-purple-600 hover:from-purple-600 hover:to-purple-700 hover:shadow-lg shadow-purple-500/25";
+  if (key === "⌫")
+    return "bg-gradient-to-br from-orange-500 to-orange-600 text-white border-orange-600 hover:from-orange-600 hover:to-orange-700 hover:shadow-lg shadow-orange-500/25";
+  return "bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 border-gray-200 hover:from-gray-100 hover:to-gray-200 hover:shadow-md";
 };
 
 const getAriaLabel = (key: string) => {
-  if (key === "CE") return "Clear Entry";
-  if (key === "C") return "Clear All";
-  if (key === "⌫") return "Backspace";
-  return undefined;
+  const labels: Record<string, string> = {
+    CE: "Clear Entry",
+    C: "Clear All",
+    "⌫": "Backspace",
+  };
+  return labels[key];
 };
 
 // Types
@@ -317,26 +248,21 @@ export default function App() {
 
   // Auto-scroll history
   useEffect(() => {
-    if (historyRef.current) {
-      historyRef.current.scrollTop = 0;
-    }
+    if (historyRef.current) historyRef.current.scrollTop = 0;
   }, [history]);
 
   // Cleanup timeout
   useEffect(() => {
     return () => {
-      if (calculationTimeoutRef.current) {
+      if (calculationTimeoutRef.current)
         clearTimeout(calculationTimeoutRef.current);
-      }
     };
   }, []);
 
   const handleError = useCallback((error: unknown) => {
     const message =
       error instanceof Error ? error.message : "An error occurred";
-
-    // Sanitize error message
-    const safeMessage = message.replace(/[<>]/g, "").substring(0, 50);
+    const safeMessage = sanitizeText(message);
     setError(safeMessage);
     setTimeout(() => setError(""), 3000);
   }, []);
@@ -362,20 +288,8 @@ export default function App() {
   const clearEntry = useCallback(() => {
     clearCalculation();
     setDisplayValue("");
-
-    // Safely clear entry from expression
     const newExpression = expression.replace(/([\d.]+)$/g, "");
-
-    // Final validation before setting state
-    if (
-      newExpression.length > 50 ||
-      newExpression.includes("<") ||
-      newExpression.includes(">") ||
-      newExpression.includes("script")
-    ) {
-      return;
-    }
-
+    if (newExpression.length > 50 || /[<>]|script/.test(newExpression)) return;
     setExpression(newExpression);
     setJustCalculated(false);
     setWaitingForOperand(false);
@@ -385,31 +299,17 @@ export default function App() {
   const handleBackspace = useCallback(() => {
     if (isCalculating) return;
     setError("");
-
     if (displayValue.length > 0) {
       const newDisplayValue = displayValue.slice(0, -1);
       setDisplayValue(newDisplayValue);
-
-      let newExpression = expression;
-      if (waitingForOperand) {
-        newExpression = expression.replace(/([\d.]+)\s*$/, "");
-      } else {
-        newExpression = expression.slice(0, -1);
-      }
-
-      // Final validation before setting state
+      const newExpression = waitingForOperand
+        ? expression.replace(/([\d.]+)\s*$/, "")
+        : expression.slice(0, -1);
       if (
         newExpression.length > 50 ||
-        newDisplayValue.includes("<") ||
-        newDisplayValue.includes(">") ||
-        newDisplayValue.includes("script") ||
-        newExpression.includes("<") ||
-        newExpression.includes(">") ||
-        newExpression.includes("script")
-      ) {
+        /[<>]|script/.test(newDisplayValue + newExpression)
+      )
         return;
-      }
-
       setExpression(newExpression);
       setLastKey("⌫");
       setJustCalculated(false);
@@ -420,27 +320,16 @@ export default function App() {
   const handlePercentage = useCallback(() => {
     if (isCalculating) return;
     setError("");
-
-    let newExpression: string;
-    if (expression === "" || /[+\-x/]\s*$/.test(expression)) {
-      const valueToUse = displayValue || "0";
-      newExpression = expression + valueToUse + "%";
-    } else if (/[\d.]$/.test(expression)) {
-      newExpression = expression + "%";
-    } else {
-      newExpression = expression + "%";
-    }
-
-    // Final validation before setting state
-    if (
-      newExpression.length > 50 ||
-      newExpression.includes("<") ||
-      newExpression.includes(">") ||
-      newExpression.includes("script")
-    ) {
-      return;
-    }
-
+    const newExpression = (() => {
+      if (expression === "" || /[+\-x/]\s*$/.test(expression)) {
+        return expression + (displayValue || "0") + "%";
+      } else if (/[\d.]$/.test(expression)) {
+        return expression + "%";
+      } else {
+        return expression + "%";
+      }
+    })();
+    if (newExpression.length > 50 || /[<>]|script/.test(newExpression)) return;
     setExpression(newExpression);
     setLastKey("%");
     setJustCalculated(false);
@@ -449,41 +338,19 @@ export default function App() {
 
   const handleOperator = useCallback(
     (key: string) => {
-      // Validate operator key
-      if (!["+", "-", "x", "/"].includes(key)) {
-        return;
-      }
-
-      if (isCalculating) return;
+      if (!["+", "-", "x", "/"].includes(key) || isCalculating) return;
       setError("");
       setJustCalculated(false);
       setWaitingForOperand(true);
       setLastKey(key);
-
       const newExpression = (() => {
-        if (/[+\-x/]\s*$/.test(expression)) {
+        if (/[+\-x/]\s*$/.test(expression))
           return expression.replace(/[+\-x/]\s*$/, ` ${key} `);
-        }
-        if (expression === "") {
-          return displayValue + ` ${key} `;
-        }
+        if (expression === "") return displayValue + ` ${key} `;
         return expression + ` ${key} `;
       })();
-
-      // Validate expression length
-      if (newExpression.length > 50) {
+      if (newExpression.length > 50 || /[<>]|script/.test(newExpression))
         return;
-      }
-
-      // Final validation before setting state
-      if (
-        newExpression.includes("<") ||
-        newExpression.includes(">") ||
-        newExpression.includes("script")
-      ) {
-        return;
-      }
-
       setExpression(newExpression);
     },
     [isCalculating, expression, displayValue]
@@ -498,7 +365,6 @@ export default function App() {
     calculationTimeoutRef.current = setTimeout(() => {
       try {
         let expressionToEvaluate = expression;
-
         if (/[+\-x/]\s*$/.test(expression)) {
           expressionToEvaluate = expression + displayValue;
         } else if (expression === "") {
@@ -525,14 +391,7 @@ export default function App() {
         }
 
         const formattedResult = formatNumber(Number(result));
-
-        // Validate result before setting state
-        if (
-          formattedResult.includes("<") ||
-          formattedResult.includes(">") ||
-          formattedResult.includes("script")
-        ) {
-          console.log("❌ Dangerous characters in result");
+        if (/[<>]|script/.test(formattedResult)) {
           setError("Invalid result");
           setIsCalculating(false);
           return;
@@ -542,27 +401,16 @@ export default function App() {
 
         if (expressionToEvaluate.trim() !== "") {
           setHistory((h) => {
-            // Sanitize history items
-            const safeExpression = expressionToEvaluate
-              .replace(/\s+/g, " ")
-              .trim()
-              .replace(/[<>]/g, "")
-              .substring(0, 30);
-            const safeResult = formattedResult
-              .replace(/[<>]/g, "")
-              .substring(0, 20);
-
+            const safeExpression = sanitizeText(
+              expressionToEvaluate.replace(/\s+/g, " ").trim(),
+              30
+            );
+            const safeResult = sanitizeText(formattedResult, 20);
             const newHistory = [
-              {
-                expression: safeExpression,
-                result: safeResult,
-              },
+              { expression: safeExpression, result: safeResult },
               ...h,
             ];
-
-            // Limit history to 20 items to prevent memory issues
-            const limitedHistory = newHistory.slice(0, 20);
-            return limitedHistory;
+            return newHistory.slice(0, 20);
           });
         }
 
@@ -582,34 +430,26 @@ export default function App() {
     if (isCalculating) return;
     setError("");
 
-    let newDisplayValue: string;
-    let newExpression: string;
-
-    if (justCalculated || waitingForOperand) {
-      newDisplayValue = "0.";
-      newExpression =
-        expression + (expression === "" || lastKey === "=" ? "0." : " 0.");
-      setJustCalculated(false);
-      setWaitingForOperand(false);
-    } else if (!displayValue.includes(".")) {
-      newDisplayValue = displayValue + ".";
-      newExpression = expression + ".";
-    } else {
+    if (!justCalculated && !waitingForOperand && displayValue.includes("."))
       return;
-    }
 
-    // Final validation before setting state
+    const newDisplayValue =
+      justCalculated || waitingForOperand ? "0." : displayValue + ".";
+    const newExpression =
+      justCalculated || waitingForOperand
+        ? expression + (expression === "" || lastKey === "=" ? "0." : " 0.")
+        : expression + ".";
+
     if (
       newDisplayValue.length > 15 ||
       newExpression.length > 50 ||
-      newDisplayValue.includes("<") ||
-      newDisplayValue.includes(">") ||
-      newDisplayValue.includes("script") ||
-      newExpression.includes("<") ||
-      newExpression.includes(">") ||
-      newExpression.includes("script")
-    ) {
+      /[<>]|script/.test(newDisplayValue + newExpression)
+    )
       return;
+
+    if (justCalculated || waitingForOperand) {
+      setJustCalculated(false);
+      setWaitingForOperand(false);
     }
 
     setDisplayValue(newDisplayValue);
@@ -626,54 +466,32 @@ export default function App() {
 
   const handleNumber = useCallback(
     (key: string) => {
-      // Validate input key
-      if (!/^\d$/.test(key)) {
+      if (!/^\d$/.test(key) || isCalculating || displayValue.length >= 15)
         return;
-      }
-
-      if (isCalculating) {
-        return;
-      }
       setError("");
 
-      // Limit input length to prevent overflow
-      if (displayValue.length >= 15) {
-        return;
-      }
-
-      let newDisplayValue: string;
-      let newExpression: string;
-
-      if (
+      const isNewNumber =
         lastKey === "=" ||
         displayValue === "0" ||
         justCalculated ||
-        waitingForOperand
-      ) {
-        newDisplayValue = key;
-        newExpression = waitingForOperand ? expression + key : key;
+        waitingForOperand;
+      const newDisplayValue = isNewNumber ? key : displayValue + key;
+      const newExpression = isNewNumber
+        ? waitingForOperand
+          ? expression + key
+          : key
+        : expression + key;
+
+      if (
+        newDisplayValue.length > 15 ||
+        newExpression.length > 50 ||
+        /[<>]|script/.test(newDisplayValue + newExpression)
+      )
+        return;
+
+      if (isNewNumber) {
         setJustCalculated(false);
         setWaitingForOperand(false);
-      } else {
-        newDisplayValue = displayValue + key;
-        newExpression = expression + key;
-      }
-
-      // Final validation before setting state
-      if (newDisplayValue.length > 15 || newExpression.length > 50) {
-        return;
-      }
-
-      // Final security validation
-      if (
-        newDisplayValue.includes("<") ||
-        newDisplayValue.includes(">") ||
-        newDisplayValue.includes("script") ||
-        newExpression.includes("<") ||
-        newExpression.includes(">") ||
-        newExpression.includes("script")
-      ) {
-        return;
       }
 
       setDisplayValue(newDisplayValue);
@@ -694,44 +512,37 @@ export default function App() {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       const key = e.key;
-
-      // Ignore space and other non-calculator keys
       if (
-        key === " " ||
-        key === "Spacebar" ||
-        key === "Tab" ||
-        key === "Shift" ||
-        key === "Control" ||
-        key === "Alt" ||
-        key === "Meta"
+        [" ", "Spacebar", "Tab", "Shift", "Control", "Alt", "Meta"].includes(
+          key
+        )
       )
         return;
 
       if (KEY_MAP[key]) {
         e.preventDefault();
         const mappedKey = KEY_MAP[key];
-
-        // Validate mapped key before processing
         if (
           !["C", "CE", "⌫", "%", "+", "-", "x", "/", "=", "."].includes(
             mappedKey
           ) &&
           !/^\d$/.test(mappedKey)
-        ) {
+        )
           return;
-        }
 
-        if (mappedKey === "C") return clearAll();
-        if (mappedKey === "CE") return clearEntry();
-        if (mappedKey === "⌫") return handleBackspace();
-        if (mappedKey === "%") return handlePercentage();
+        const handlers: Record<string, () => void> = {
+          C: clearAll,
+          CE: clearEntry,
+          "⌫": handleBackspace,
+          "%": handlePercentage,
+          "=": handleEquals,
+          ".": handleDecimal,
+        };
+
+        if (handlers[mappedKey]) return handlers[mappedKey]();
         if (["+", "-", "x", "/"].includes(mappedKey))
           return handleOperator(mappedKey);
-        if (mappedKey === "=") return handleEquals();
-        if (mappedKey === ".") return handleDecimal();
-        if (/\d/.test(mappedKey)) {
-          return handleNumber(mappedKey);
-        }
+        if (/\d/.test(mappedKey)) return handleNumber(mappedKey);
       }
     },
     [
@@ -752,11 +563,6 @@ export default function App() {
   }, [handleKeyDown]);
 
   const handleButtonClick = (key: string) => {
-    // Validate button key
-    if (!key || key === "" || (isCalculating && key !== "C" && key !== "CE"))
-      return;
-
-    // Validate key is from allowed set
     const allowedKeys = [
       "C",
       "CE",
@@ -779,20 +585,28 @@ export default function App() {
       "8",
       "9",
     ];
-    if (!allowedKeys.includes(key)) {
+    if (
+      !key ||
+      key === "" ||
+      (isCalculating && key !== "C" && key !== "CE") ||
+      !allowedKeys.includes(key)
+    )
       return;
-    }
 
     setActiveButton(key);
     setTimeout(() => setActiveButton(""), 150);
 
-    if (key === "C") return clearAll();
-    if (key === "CE") return clearEntry();
-    if (key === "⌫") return handleBackspace();
-    if (key === "%") return handlePercentage();
+    const handlers: Record<string, () => void> = {
+      C: clearAll,
+      CE: clearEntry,
+      "⌫": handleBackspace,
+      "%": handlePercentage,
+      "=": handleEquals,
+      ".": handleDecimal,
+    };
+
+    if (handlers[key]) return handlers[key]();
     if (["+", "-", "x", "/"].includes(key)) return handleOperator(key);
-    if (key === "=") return handleEquals();
-    if (key === ".") return handleDecimal();
     if (/\d/.test(key)) return handleNumber(key);
   };
 
