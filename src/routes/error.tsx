@@ -1,17 +1,26 @@
 import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
 import { AlertCircle, Home } from "lucide-react";
 
-export default function ErrorPage() {
-  const error = useRouteError();
+interface ErrorPageProps {
+  error?: unknown;
+}
+
+export default function ErrorPage({ error: errorProp }: ErrorPageProps = {}) {
+  const routeError = useRouteError();
+  const error = errorProp ?? routeError;
 
   let errorMessage = "An unexpected error occurred";
   let errorStatus = 500;
 
   if (isRouteErrorResponse(error)) {
-    errorMessage = error.statusText || error.data || errorMessage;
+    errorMessage =
+      error.statusText ||
+      (typeof error.data === "string" ? error.data : errorMessage);
     errorStatus = error.status;
   } else if (error instanceof Error) {
     errorMessage = error.message;
+  } else if (typeof error === "string") {
+    errorMessage = error;
   }
 
   return (

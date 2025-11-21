@@ -1,10 +1,9 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
-import { Calculator, Home } from "lucide-react";
+import { Outlet, NavLink, useNavigation } from "react-router-dom";
+import { Calculator, Home, Loader } from "lucide-react";
 
 export default function Layout() {
-  const location = useLocation();
-
-  const isActive = (path: string) => location.pathname === path;
+  const navigation = useNavigation();
+  const isNavigating = navigation.state === "loading";
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -18,31 +17,58 @@ export default function Layout() {
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <Link
+              <NavLink
                 to="/"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
-                  isActive("/")
-                    ? "bg-blue-100 text-blue-700 font-semibold"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
+                end
+                className={({ isActive, isPending }) =>
+                  `flex items-center gap-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
+                    isActive
+                      ? "bg-blue-100 text-blue-700 font-semibold"
+                      : isPending
+                      ? "text-gray-400"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`
+                }
               >
-                <Home className="size-4" />
-              </Link>
-              <Link
+                {({ isPending }) => (
+                  <>
+                    <Home className="size-4" />
+                    {isPending && <Loader className="size-3 animate-spin" />}
+                  </>
+                )}
+              </NavLink>
+              <NavLink
                 to="/calculator"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
-                  isActive("/calculator")
-                    ? "bg-blue-100 text-blue-700 font-semibold"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
+                className={({ isActive, isPending }) =>
+                  `flex items-center gap-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
+                    isActive
+                      ? "bg-blue-100 text-blue-700 font-semibold"
+                      : isPending
+                      ? "text-gray-400"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`
+                }
               >
-                <Calculator className="size-4" />
-              </Link>
+                {({ isPending }) => (
+                  <>
+                    <Calculator className="size-4" />
+                    {isPending && <Loader className="size-3 animate-spin" />}
+                  </>
+                )}
+              </NavLink>
             </div>
           </div>
         </div>
       </nav>
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4 relative">
+        {isNavigating && (
+          <div className="absolute top-4 right-4 z-10">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg flex items-center gap-2 text-sm text-gray-600">
+              <Loader className="size-4 animate-spin" />
+              <span>Loading...</span>
+            </div>
+          </div>
+        )}
         <Outlet />
       </main>
       <footer className="bg-white/80 backdrop-blur-sm border-t border-white/20 py-4">
