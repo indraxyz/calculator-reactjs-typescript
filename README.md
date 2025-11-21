@@ -24,7 +24,6 @@ A beautiful, secure, and feature-rich calculator built with React 19, TypeScript
 
 ### 🎨 Modern UI/UX Design
 
-- **Glass Morphism**: Beautiful backdrop blur effects with transparency
 - **Responsive Design**: Optimized for both desktop and mobile devices
 - **Interactive Animations**:
   - Button ripple effects and hover animations
