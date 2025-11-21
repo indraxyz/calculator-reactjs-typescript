@@ -1,11 +1,18 @@
-import { StrictMode } from "react";
+import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "@/routes/_layout";
-import Home from "@/routes/index";
-import Calculator from "@/routes/calculator";
 import ErrorPage from "@/routes/error";
 import "@/index.css";
+
+const Home = lazy(() => import("@/routes/index"));
+const Calculator = lazy(() => import("@/routes/calculator"));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-gray-600">Loading...</div>
+  </div>
+);
 
 const router = createBrowserRouter([
   {
@@ -15,11 +22,19 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Home />,
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Home />
+          </Suspense>
+        ),
       },
       {
         path: "calculator",
-        element: <Calculator />,
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Calculator />
+          </Suspense>
+        ),
       },
     ],
   },
