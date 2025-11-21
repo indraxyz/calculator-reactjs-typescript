@@ -6,7 +6,7 @@ A beautiful, secure, and feature-rich calculator built with React 19, TypeScript
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?logo=typescript)
 ![Vite](https://img.shields.io/badge/Vite-6.3.5-646CFF?logo=vite)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.11-38B2AC?logo=tailwind-css)
-![React Router](https://img.shields.io/badge/React_Router-v7-CA4245?logo=react-router)
+![React Router](https://img.shields.io/badge/React_Router-7.9.6-CA4245?logo=react-router)
 
 ## ✨ Features
 
@@ -31,6 +31,10 @@ A beautiful, secure, and feature-rich calculator built with React 19, TypeScript
   - Smooth transitions and scaling effects
   - Pulse animation for latest history items
   - Active button states with visual feedback
+- **Loading States**:
+  - Skeleton loaders for route transitions
+  - Navigation loading indicators
+  - Pending state feedback
 - **Accessibility**:
   - ARIA labels for screen readers
   - Full keyboard navigation support
@@ -41,6 +45,7 @@ A beautiful, secure, and feature-rich calculator built with React 19, TypeScript
   - Error highlighting with clear messages
   - Tooltips for long text
   - Color-coded button types
+  - Route transition indicators
 
 ### 🔒 Security & Validation
 
@@ -98,9 +103,12 @@ A beautiful, secure, and feature-rich calculator built with React 19, TypeScript
    pnpm dev
    ```
 
-4. **Open your browser**
+   The development server will automatically open your browser at `http://localhost:5173` (configured in `vite.config.ts`).
 
-   Navigate to `http://localhost:5173` to see the calculator in action.
+4. **Navigate the application**
+
+   - Home page (`/`) - Feature showcase and introduction
+   - Calculator (`/calculator`) - The calculator application
 
 ### Building for Production
 
@@ -127,7 +135,7 @@ npm run lint
 - **[TypeScript 5.8.3](https://www.typescriptlang.org/)** - Type safety and enhanced developer experience
 - **[Vite 6.3.5](https://vitejs.dev/)** - Lightning-fast build tool and development server
 - **[Tailwind CSS 4.1.11](https://tailwindcss.com/)** - Utility-first CSS framework with new features
-- **[React Router v7.9.6](https://reactrouter.com/)** - Declarative routing with nested routes, error boundaries, and type-safe navigation
+- **[React Router v7.9.6](https://reactrouter.com/)** - Declarative routing with nested routes, error boundaries, lazy loading, and type-safe navigation
 
 ### Additional Libraries
 
@@ -140,22 +148,33 @@ npm run lint
 calculator-reactjs/
 ├── src/
 │   ├── components/              # React components
-│   │   └── calculator/
-│   │       ├── CalculatorButton.tsx
-│   │       ├── Display.tsx
-│   │       ├── History.tsx
+│   │   ├── calculator/          # Calculator-specific components
+│   │   │   ├── CalculatorButton.tsx
+│   │   │   ├── Display.tsx
+│   │   │   ├── History.tsx
+│   │   │   └── index.ts
+│   │   ├── home/                # Home page components
+│   │   │   ├── Hero.tsx
+│   │   │   ├── FeatureCard.tsx
+│   │   │   ├── FeatureCardsGrid.tsx
+│   │   │   ├── FeaturesList.tsx
+│   │   │   └── index.ts
+│   │   └── skeletons/           # Loading skeleton components
+│   │       ├── HomeSkeleton.tsx
+│   │       ├── CalculatorSkeleton.tsx
 │   │       └── index.ts
 │   ├── hooks/                   # Custom React hooks
 │   │   ├── useCalculator.ts     # Main calculator logic
 │   │   └── useKeyboard.ts       # Keyboard event handling
 │   ├── routes/                  # React Router routes
-│   │   ├── _layout.tsx          # Layout component with navigation
+│   │   ├── _layout.tsx          # Layout component with navigation and footer
 │   │   ├── index.tsx            # Home page route
 │   │   ├── calculator.tsx       # Calculator route
 │   │   └── error.tsx            # Error boundary page
 │   ├── lib/                     # Utility libraries
 │   │   ├── constants/           # Application constants
 │   │   │   ├── buttons.ts       # Button configurations
+│   │   │   ├── features.ts      # Feature definitions
 │   │   │   └── limits.ts        # Validation limits
 │   │   ├── utils/               # Utility functions
 │   │   │   ├── calculator.ts    # Expression evaluation
@@ -163,14 +182,9 @@ calculator-reactjs/
 │   │   │   ├── validation.ts    # Input validation
 │   │   │   └── index.ts         # Utility exports
 │   │   └── env.d.ts             # Environment types
-│   ├── routes/                  # React Router routes (optional)
-│   │   ├── _layout.tsx          # Layout component
-│   │   ├── calculator.tsx       # Calculator route
-│   │   └── index.tsx            # Index route
 │   ├── types/                   # TypeScript type definitions
 │   │   └── index.ts
-│   ├── App.tsx                  # Main application component
-│   ├── main.tsx                 # Application entry point
+│   ├── main.tsx                 # Application entry point with router
 │   ├── index.css                # Global styles
 │   └── vite-env.d.ts            # Vite type definitions
 ├── public/                      # Static assets
@@ -192,18 +206,24 @@ calculator-reactjs/
 The application follows a clean, modular architecture:
 
 - **Components**: Reusable UI components with clear responsibilities
+  - **Calculator Components**: Display, buttons, and history
+  - **Home Components**: Hero, feature cards, and feature lists
+  - **Skeleton Components**: Loading states for routes
 - **Hooks**: Custom hooks for business logic and state management
 - **Utils**: Pure functions for calculations, formatting, and validation
-- **Constants**: Centralized configuration and limits
+- **Constants**: Centralized configuration, limits, and feature definitions
 - **Types**: Shared TypeScript interfaces and types
 
 ### Key Design Patterns
 
 - **Custom Hooks**: Encapsulated calculator logic in `useCalculator`
+- **Lazy Loading**: Route-based code splitting with Suspense boundaries
+- **Skeleton UI**: Loading states with skeleton components for better UX
 - **Separation of Concerns**: Clear separation between UI, logic, and utilities
 - **Type Safety**: Comprehensive TypeScript types throughout
 - **Validation**: Centralized validation utilities
 - **Constants**: Magic numbers extracted to named constants
+- **Error Boundaries**: Route-level error handling with custom error pages
 
 ### Routing (React Router v7)
 
@@ -211,14 +231,17 @@ The project uses React Router v7 for multi-page navigation with the following fe
 
 - **Declarative Routing**: Type-safe routing with full TypeScript support
 - **Nested Routes**: Layout component with child routes for organized structure
-- **Error Boundaries**: Route-level error handling with custom error page
+- **Error Boundaries**: Route-level error handling with custom error page using `ErrorBoundary` component
+- **Lazy Loading**: Code splitting with `React.lazy()` and `Suspense` for optimal performance
+- **Loading States**: Skeleton loaders and navigation loading indicators
 - **Code Splitting**: Optimized bundle splitting for React Router in Vite config
-- **Navigation**: Custom navigation bar with active route highlighting
+- **Navigation**: Custom navigation bar with active route highlighting and loading states
+- **Future Flags**: React Router v7 future flags enabled for latest features
 - **Type Safety**: Full TypeScript support for routes and navigation
 
 **Current Routes:**
 
-- `/` - Home page with feature showcase
+- `/` - Home page with feature showcase (Hero, FeatureCardsGrid, FeaturesList)
 - `/calculator` - Calculator application
 - `*` - Error page for invalid routes
 
@@ -226,45 +249,100 @@ The project uses React Router v7 for multi-page navigation with the following fe
 
 ```typescript
 // src/main.tsx
-const router = createBrowserRouter([
+const Home = lazy(() => import("@/routes/index"));
+const Calculator = lazy(() => import("@/routes/calculator"));
+
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      Component: Layout,
+      ErrorBoundary: ErrorPage,
+      children: [
+        {
+          index: true,
+          Component: HomeWithSuspense,
+        },
+        {
+          path: "calculator",
+          Component: CalculatorWithSuspense,
+        },
+      ],
+    },
+  ],
   {
-    path: "/",
-    element: <Layout />,
-    errorElement: <ErrorPage />,
-    children: [
-      { index: true, element: <Home /> },
-      { path: "calculator", element: <Calculator /> },
-    ],
-  },
-]);
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+      v7_fetcherPersist: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+    },
+  }
+);
 ```
 
 **Navigation Implementation:**
 
-The layout component includes a navigation bar with:
+The layout component includes:
 
-- Active route highlighting
-- Responsive design
+- Navigation bar with active route highlighting using `NavLink`
+- Loading indicators during route transitions using `useNavigation()`
+- Footer with technology stack information
+- Responsive design with glass morphism styling
 - Icon-based navigation using Lucide React
 - Smooth transitions and hover effects
+- Pending state indicators for navigation links
+
+**Lazy Loading & Suspense:**
+
+Routes are lazy-loaded with custom skeleton components:
+
+```typescript
+const HomeWithSuspense = () => (
+  <Suspense fallback={<HomeSkeleton />}>
+    <Home />
+  </Suspense>
+);
+
+const CalculatorWithSuspense = () => (
+  <Suspense fallback={<CalculatorPageSkeleton />}>
+    <Calculator />
+  </Suspense>
+);
+```
 
 **Using React Router Hooks:**
 
 ```typescript
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import {
+  useNavigate,
+  useLocation,
+  useNavigation,
+  NavLink,
+} from "react-router-dom";
 
 // Get current location
 const location = useLocation();
 const isActive = location.pathname === "/calculator";
 
+// Navigation state
+const navigation = useNavigation();
+const isNavigating = navigation.state === "loading";
+
 // Navigation
 const navigate = useNavigate();
 navigate("/calculator");
 
-// Links with active state
-<Link to="/calculator" className={isActive ? "active" : ""}>
+// NavLink with active and pending states
+<NavLink
+  to="/calculator"
+  className={({ isActive, isPending }) =>
+    isActive ? "active" : isPending ? "pending" : ""
+  }
+>
   Calculator
-</Link>;
+</NavLink>;
 ```
 
 ## 🎯 Key Features Explained
@@ -364,7 +442,9 @@ Calculation history with visual feedback:
 
 ### Constants
 
-All configurable values are centralized in `src/lib/constants/limits.ts`:
+All configurable values are centralized in constants files:
+
+**Limits** (`src/lib/constants/limits.ts`):
 
 ```typescript
 export const MAX_DISPLAY_LENGTH = 15;
@@ -374,6 +454,19 @@ export const CALCULATION_DELAY_MS = 50;
 export const ERROR_DISPLAY_DURATION_MS = 3000;
 export const BUTTON_ACTIVE_DURATION_MS = 150;
 ```
+
+**Buttons** (`src/lib/constants/buttons.ts`):
+
+- Button layout configuration
+- Keyboard mapping
+- Button styling classes
+- ARIA labels
+
+**Features** (`src/lib/constants/features.ts`):
+
+- Feature card definitions
+- Feature list items
+- Icon configurations
 
 ### Path Aliases
 
@@ -388,6 +481,31 @@ Configured in:
 
 - `vite.config.ts` - Build-time resolution
 - `tsconfig.app.json` - TypeScript path mapping
+
+### Vite Configuration
+
+The project includes optimized Vite configuration:
+
+**Build Optimizations:**
+
+- Manual chunk splitting for React, React Router, and Lucide icons
+- Source maps enabled for debugging
+- CSS code splitting and minification
+- Optimized asset file naming with hashing
+
+**Development Features:**
+
+- Server warmup for faster initial load
+- Auto-open browser on dev server start
+- Port 5173 configured
+- Fast HMR (Hot Module Replacement)
+
+**Performance:**
+
+- ESNext target for modern JavaScript features
+- Optimized dependency pre-bundling
+- Tree shaking enabled
+- Compressed size reporting
 
 ### React Router v7 Implementation
 
@@ -405,42 +523,62 @@ The router is configured in `src/main.tsx` with:
 
 ```
 src/routes/
-├── _layout.tsx      # Main layout with navigation and footer
-├── index.tsx        # Home page route (/)
+├── _layout.tsx      # Main layout with navigation, footer, and loading states
+├── index.tsx        # Home page route (/) with Hero and Features
 ├── calculator.tsx   # Calculator route (/calculator)
-└── error.tsx        # Error boundary page
+└── error.tsx        # Error boundary page with error handling
 ```
 
 **Features Implemented:**
 
-- ✅ **Layout Component**: Shared layout with navigation bar and footer
+- ✅ **Layout Component**: Shared layout with navigation bar, footer, and loading indicators
 - ✅ **Nested Routes**: Calculator and Home as child routes
-- ✅ **Error Boundaries**: Custom error page for route errors
-- ✅ **Active Route Highlighting**: Visual feedback for current route
+- ✅ **Error Boundaries**: Custom error page using `ErrorBoundary` component prop
+- ✅ **Lazy Loading**: Routes loaded on-demand with `React.lazy()` and `Suspense`
+- ✅ **Skeleton Loaders**: Custom skeleton components for loading states
+- ✅ **Navigation Loading States**: Visual feedback during route transitions
+- ✅ **Active Route Highlighting**: Visual feedback for current route with `NavLink`
+- ✅ **Pending States**: Loading indicators for pending navigation
 - ✅ **Type-safe Navigation**: Full TypeScript support
 - ✅ **Code Splitting**: React Router bundled separately for optimization
+- ✅ **Future Flags**: React Router v7 future features enabled
 
 **Adding New Routes:**
 
 To add a new route, simply:
 
 1. Create a new component in `src/routes/`
-2. Add it to the router configuration in `src/main.tsx`:
+2. Create a skeleton component in `src/components/skeletons/` for loading state
+3. Add lazy import and Suspense wrapper in `src/main.tsx`:
+
+```typescript
+const NewRoute = lazy(() => import("@/routes/new-route"));
+
+export const NewRouteWithSuspense = () => (
+  <Suspense fallback={<NewRouteSkeleton />}>
+    <NewRoute />
+  </Suspense>
+);
+```
+
+4. Add it to the router configuration:
 
 ```typescript
 {
   path: "new-route",
-  element: <NewRoute />,
+  Component: NewRouteWithSuspense,
 }
 ```
 
-3. Add navigation link in `src/routes/_layout.tsx` if needed
+5. Add navigation link in `src/routes/_layout.tsx` if needed using `NavLink`
 
 **Available Hooks:**
 
 - `useNavigate()` - Programmatic navigation
 - `useLocation()` - Current route location
+- `useNavigation()` - Navigation state (loading, submitting, etc.)
 - `useRouteError()` - Error information in error boundaries
+- `NavLink` component - Declarative navigation links with active/pending states
 - `Link` component - Declarative navigation links
 
 ## 🧪 Development
@@ -478,6 +616,7 @@ To add a new route, simply:
 - No unit conversion features
 - No expression editing after calculation
 - No route-level data loading (loaders not yet implemented)
+- Expression length limit: 50 characters (validation) / 100 characters (calculator evaluation)
 
 ### Future Enhancements
 
@@ -491,8 +630,9 @@ To add a new route, simply:
 - [ ] Support for parentheses and complex expressions
 - [ ] Add calculator history page with React Router
 - [ ] Implement route-level data loading with loaders
-- [ ] Add route-based lazy loading for better performance
 - [ ] Create about/help page with route
+- [ ] Add unit tests for calculator logic
+- [ ] Add E2E tests for user flows
 
 ## 🤝 Contributing
 
@@ -541,9 +681,13 @@ If you encounter any issues or have questions:
 
 ## 📊 Project Stats
 
-- **Lines of Code**: ~1000+
-- **Components**: 3 main components
-- **Custom Hooks**: 2 hooks
+- **Lines of Code**: ~1500+
+- **Components**:
+  - Calculator: 3 components (Display, CalculatorButton, History)
+  - Home: 4 components (Hero, FeatureCard, FeatureCardsGrid, FeaturesList)
+  - Skeletons: 2 skeleton components (HomeSkeleton, CalculatorSkeleton)
+- **Custom Hooks**: 2 hooks (useCalculator, useKeyboard)
+- **Routes**: 3 routes (Home, Calculator, Error)
 - **Utility Functions**: 10+ functions
 - **TypeScript Coverage**: 100%
 
