@@ -77,7 +77,7 @@ export default function Calculator() {
   };
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="w-full flex md:flex-row flex-col md:items-start justify-center gap-8 items-center">
       <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 p-4 md:p-6 w-full max-w-sm flex flex-col items-center shadow-2xl shadow-black/10">
         <Display
           displayValue={displayValue}
@@ -102,9 +102,7 @@ export default function Calculator() {
           })}
         </div>
       </div>
-      {history.length > 0 && (
-        <History history={history} onClear={clearHistory} />
-      )}
+      <History history={history} onClear={clearHistory} />
     </div>
   );
 }

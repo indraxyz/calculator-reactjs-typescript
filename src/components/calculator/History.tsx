@@ -8,7 +8,7 @@ export const History = ({ history, onClear }: HistoryProps) => {
   };
 
   return (
-    <div className="mt-6 w-full max-w-sm bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 p-4 text-sm  shadow-xl shadow-black/10">
+    <div className=" w-full max-w-sm bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 p-4 text-sm  shadow-xl shadow-black/10">
       <div className="flex justify-between items-center mb-3">
         <span className="font-semibold text-gray-600 flex items-center gap-2">
           <HistoryIcon className="size-4 text-blue-600" />

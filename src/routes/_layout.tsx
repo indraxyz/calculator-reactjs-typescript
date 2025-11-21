@@ -14,7 +14,7 @@ export default function Layout() {
             <div className="flex items-center gap-2">
               <Calculator className="size-6 text-blue-600" />
               <span className="text-xl font-bold text-gray-900">
-                Calculator App
+                Calculator
               </span>
             </div>
             <div className="flex items-center gap-4">
@@ -27,7 +27,6 @@ export default function Layout() {
                 }`}
               >
                 <Home className="size-4" />
-                <span>Home</span>
               </Link>
               <Link
                 to="/calculator"
@@ -38,7 +37,6 @@ export default function Layout() {
                 }`}
               >
                 <Calculator className="size-4" />
-                <span>Calculator</span>
               </Link>
             </div>
           </div>
@@ -50,8 +48,7 @@ export default function Layout() {
       <footer className="bg-white/80 backdrop-blur-sm border-t border-white/20 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-600">
           <p>
-            Built with React 19, TypeScript, Vite, Tailwind CSS v4, and React
-            Router v7
+            ⚙️ React 19, TypeScript, Vite, Tailwind CSS v4, and React Router v7
           </p>
         </div>
       </footer>
