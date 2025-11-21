@@ -1,0 +1,6 @@
+export const MAX_DISPLAY_LENGTH = 15;
+export const MAX_EXPRESSION_LENGTH = 50;
+export const MAX_HISTORY_ITEMS = 20;
+export const CALCULATION_DELAY_MS = 50;
+export const ERROR_DISPLAY_DURATION_MS = 3000;
+export const BUTTON_ACTIVE_DURATION_MS = 150;
