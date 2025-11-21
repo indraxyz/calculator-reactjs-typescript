@@ -694,5 +694,3 @@ If you encounter any issues or have questions:
 ---
 
 **Built with ❤️ using React 19, TypeScript, Vite, Tailwind CSS v4, and React Router v7**
-
-_Last updated: 2024_
